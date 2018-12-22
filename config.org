@@ -1,0 +1,211 @@
+** Initial configuration
+*** Some personal information
+
+#+BEGIN_SRC emacs-lisp
+(setq user-full-name "Jeff Hemminger"
+      user-mail-address "jeff.hemminger@gmail.com")
+#+END_SRC
+
+*** plumbing
+
+    To tell emacs that all saves should go to the ~/.backups~ folder.
+
+#+BEGIN_SRC emacs-lisp
+(setq backup-directory-alist `(("." . "~/.backups")))
+(defalias 'yes-or-no-p 'y-or-n-p)
+#+END_SRC
+
+*** ~use-package~
+
+   I manage all the packages for my emacs configuration through the
+   fantastic [[https://github.com/jwiegley/use-package][use-package]]. Here's how to get it:
+
+#+BEGIN_SRC emacs-lisp
+(require 'package)
+
+(setq package-enable-at-startup nil)
+(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
+(add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/"))
+(add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/"))
+(add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
+(package-initialize)
+
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(eval-when-compile
+  (require 'use-package))
+
+(require 'bind-key)
+#+END_SRC
+
+*** Appearance
+
+    Select the font size, family...
+
+#+BEGIN_SRC emacs-lisp
+(set-face-attribute
+ 'default nil :family "Operator Mono"
+ :height 170)
+
+#+END_SRC
+
+
+** Tools
+
+*** Magit
+
+    Magit is a better way to use git, from within emacs, of course.
+
+#+BEGIN_SRC emacs-lisp
+(use-package magit
+  :ensure t
+  :config
+
+  (use-package magit-gh-pulls
+    :ensure t
+    :init
+    (add-hook 'magit-mode-hook 'turn-on-magit-gh-pulls))
+  :commands magit-status
+  :bind ("C-x g" . magit-status)
+)
+#+END_SRC
+
+*** Projectile
+#+BEGIN_SRC emacs-lisp
+(use-package projectile
+  :ensure t
+  :config
+  (projectile-global-mode)
+  (setq projectile-mode-line
+        '(:eval (format " [%s]" (projectile-project-name))))
+  (setq projectile-remember-window-configs t)
+  (setq projectile-completion-system 'ivy))
+#+END_SRC
+
+
+*** Autopair
+
+    Autopair is a minor mode that magically pairs your parens.  This
+    means that when you open a ~(~, it inserts a ~)~ as well.
+
+#+BEGIN_SRC emacs-lisp
+(use-package autopair
+  :ensure t
+  :diminish autopair-mode)
+#+END_SRC
+
+*** Flycheck
+
+    Flycheck is a spellchecker.  Truth be told, I don't use it very
+    much... but yeah, here it is!
+
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck
+  :ensure t
+  :pin melpa-stable)
+#+END_SRC
+
+
+*** Ivy, counsel, swiper
+
+    I'm mostly a helm user, but want to give ivy a try now.  Ivy comes
+    out of the box with ~counsel~ and ~swiper~.
+
+#+BEGIN_SRC emacs-lisp
+(use-package ivy
+  :ensure t
+  :diminish ivy-mode
+  :bind (("C-x C-b" . ivy-switch-buffer))
+  :config
+      (setq ivy-use-virtual-buffers t
+            ivy-count-format "%d/%d "
+            ivy-re-builders-alist '((swiper . ivy--regex-plus)
+                                    (t      . ivy--regex-fuzzy)))
+
+  (use-package flx
+    :ensure t)
+
+  (use-package counsel
+    :ensure t
+    :bind (("C-c a g" . counsel-projectile-ag)
+           ("M-x" . counsel-M-x)
+           ("C-x C-f" . counsel-find-file)
+           ("C-c p h" . counsel-projectile)
+           ([f9] . counsel-load-theme)))
+
+  (use-package counsel-projectile
+    :ensure t)
+
+  (use-package swiper
+    :ensure t
+    :bind (("C-s" . swiper))))
+#+END_SRC
+
+*** Org mode
+
+    I try to write down everything in org mode, and to keep it
+    updated.  This is my current configuration.
+
+#+BEGIN_SRC emacs-lisp
+(use-package org
+  :ensure t
+  :bind (
+         ("C-c a a" . org-agenda)
+	 ("C-c c" . org-capture)
+  )
+  :config
+
+  (use-package org-bullets
+    :ensure t
+    :commands (org-bullets-mode)
+    :init (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))))
+
+#+END_SRC
+
+*** Expand region
+
+#+BEGIN_SRC emacs-lisp
+(use-package expand-region
+  :ensure t
+  :bind ("C-@" . er/expand-region))
+#+END_SRC
+
+*** Golden ratio mode
+
+    This is a really cool minor mode.  It makes the windows just look right.
+
+#+BEGIN_SRC emacs-lisp
+(use-package golden-ratio
+  :ensure t
+  :diminish golden-ratio-mode
+:config (golden-ratio-mode))
+#+END_SRC
+
+*** Eshell Configuration
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-c e") 'eshell)
+;; Visual commands are commands which require a proper terminal.
+;; Eshell will run them in a term buffer when invoked.
+(setq eshell-visual-commands
+  '("less" "tmux" "htop" "top" "bash" "zsh" "fish"))
+(setq eshell-visual-subcommands
+  '(("git" "log" "l" "diff" "show")))
+
+(use-package exec-path-from-shell
+  :ensure t
+  :init
+  (when (memq window-system '(mac ns x))
+   ; (exec-path-from-shell-copy-env "PROJECT_HOME")
+    (exec-path-from-shell-copy-env "JAVA_HOME")
+    (exec-path-from-shell-initialize))
+  )
+
+#+END_SRC
+
+** Some more configuration for when all packages has been loaded
+
+#+BEGIN_SRC emacs-lisp
+(require 'bind-key)
+#+END_SRC
